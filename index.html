@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>המילוט החידתי - משחק בריחה מחדרים</title>
+    <style>
+        :root {
+            --primary-color: #4e54c8;
+            --secondary-color: #8f94fb;
+            --bg-color: #f5f5f5;
+            --text-color: #333;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --dark-color: #343a40;
+            --light-color: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            text-align: right;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        /* Game Screens */
+        .screen {
+            display: none;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Setup Screen */
+        .difficulty-options, .category-options, .time-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+
+        .option-card {
+            background-color: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            width: 140px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .option-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .option-card.selected {
+            border-color: var(--primary-color);
+            background-color: rgba(78, 84, 200, 0.1);
+        }
+
+        .option-card i {
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .category-options .option-card {
+            width: 110px;
+        }
+
+        /* Game Room Screen */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background-color: var(--light-color);
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .game-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .game-room {
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            height: 400px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .room-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            transition: all 0.5s;
+        }
+
+        .room-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .puzzle-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            width: 80%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .puzzle-title {
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .puzzle-content {
+            margin-bottom: 20px;
+        }
+
+        .visual-puzzle img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+        }
+
+        .math-puzzle {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .knowledge-puzzle {
+            font-size: 1.2em;
+        }
+
+        .puzzle-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .puzzle-option {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .puzzle-option:hover {
+            background-color: var(--light-color);
+        }
+
+        /* Results Screen */
+        .results {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .results h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .results-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .result-stat {
+            text-align: center;
+            background-color: var(--light-color);
+            padding: 15px;
+            border-radius: 8px;
+            width: 150px;
+        }
+
+        .result-stat .value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 5px 15px rgba(78, 84, 200, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: var(--light-color);
+            color: var(--text-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #e2e6ea;
+        }
+
+        .buttons-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 10px;
+        }
+
+        /* Timer */
+        .timer {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .timer.warning {
+            color: var(--warning-color);
+        }
+
+        .timer.danger {
+            color: var(--danger-color);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background: linear-gradient(to right, var(--danger-color), var(--success-color));
+            transition: width 0.5s;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Utilities */
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
+        }
+
+        .success-text {
+            color: var(--success-color);
+        }
+
+        .danger-text {
+            color: var(--danger-color);
+        }
+
+        /* Animations */
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .game-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .game-stats {
+                width: 100%;
+                justify-content: space-around;
+            }
+
+            .puzzle-options {
+                grid-template-columns: 1fr;
+            }
+
+            .results-stats {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>המילוט החידתי</h1>
+        <div class="subtitle">פתור חידות, ברח מהחדרים ושבור את הקוד!</div>
+    </header>
+
+    <div class="container">
+        <!-- Setup Screen -->
+        <div id="setup-screen" class="screen active">
+            <h2>הגדרות המשחק</h2>
+
+            <h3>בחר רמת קושי:</h3>
+            <div class="difficulty-options">
+                <div class="option-card" data-difficulty="easy">
+                    <div>קל</div>
+                    <div>חידות פשוטות<br>6 ניסיונות</div>
+                </div>
+                <div class="option-card" data-difficulty="medium">
+                    <div>בינוני</div>
+                    <div>חידות מאתגרות<br>4 ניסיונות</div>
+                </div>
+                <div class="option-card" data-difficulty="hard">
+                    <div>קשה</div>
+                    <div>חידות מורכבות<br>3 ניסיונות</div>
+                </div>
+            </div>
+
+            <h3>בחר קטגוריות חידות:</h3>
+            <div class="category-options">
+                <div class="option-card" data-category="math">
+                    <div>מתמטיקה</div>
+                </div>
+                <div class="option-card" data-category="knowledge">
+                    <div>ידע כללי</div>
+                </div>
+                <div class="option-card" data-category="visual">
+                    <div>חידות ויזואליות</div>
+                </div>
+                <div class="option-card" data-category="word">
+                    <div>חידות מילים</div>
+                </div>
+                <div class="option-card" data-category="logic">
+                    <div>חידות הגיון</div>
+                </div>
+            </div>
+
+            <h3>מצב משחק:</h3>
+            <div class="time-options">
+                <div class="option-card selected" data-time="normal">
+                    <div>רגיל</div>
+                    <div>ללא הגבלת זמן</div>
+                </div>
+                <div class="option-card" data-time="timed">
+                    <div>נגד השעון</div>
+                    <div>30 שניות לחידה</div>
+                </div>
+            </div>
+
+            <div class="text-center mt-20">
+                <button id="start-game" class="btn btn-primary">התחל משחק</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <div class="timer" id="timer">--:--</div>
+                <div class="game-stats">
+                    <div class="stat">
+                        <span>חדר:</span>
+                        <span id="current-room">1</span>/<span id="total-rooms">5</span>
+                    </div>
+                    <div class="stat">
+                        <span>ניסיונות:</span>
+                        <span id="attempts-left">3</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress-container">
+                <div id="progress-bar" class="progress-bar" style="width: 0%">0%</div>
+            </div>
+
+            <div class="game-room">
+                <div class="room-background" id="room-background"></div>
+                <div class="room-overlay">
+                    <div class="puzzle-container" id="puzzle-container">
+                        <div class="puzzle-title" id="puzzle-title">חידה #1</div>
+                        <div class="puzzle-content" id="puzzle-content">
+                            <!-- Puzzle content will be inserted here -->
+                        </div>
+                        <div class="puzzle-options" id="puzzle-options">
+                            <!-- Puzzle options will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-20">
+                <button id="quit-game" class="btn btn-secondary">צא מהמשחק</button>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="screen">
+            <div class="results">
+                <h2 id="result-title">סיימת את המשחק!</h2>
+                <p id="result-message">הצלחת לברוח מכל החדרים!</p>
+
+                <div class="results-stats">
+                    <div class="result-stat">
+                        <div>חדרים שהושלמו</div>
+                        <div id="completed-rooms" class="value">5</div>
+                        <div>מתוך 5</div>
+                    </div>
+                    <div class="result-stat">
+                        <div>ניסיונות שנוצלו</div>
+                        <div id="attempts-used" class="value">2</div>
+                    </div>
+                    <div class="result-stat">
+                        <div>זמן</div>
+                        <div id="total-time" class="value">2:45</div>
+                    </div>
+                </div>
+
+                <div class="buttons-container">
+                    <button id="play-again" class="btn btn-primary">שחק שוב</button>
+                    <button id="back-to-setup" class="btn btn-secondary">חזור להגדרות</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            difficulty: 'medium',
+            categories: [],
+            timeMode: 'normal',
+            totalRooms: 5,
+            currentRoom: 1,
+            attemptsLeft: 4,
+            maxAttempts: 4,
+            progress: 0,
+            timeLimit: 30, // seconds per puzzle
+            timer: null,
+            startTime: null,
+            timeElapsed: 0,
+            currentPuzzle: null,
+            completedRooms: 0,
+            attemptsUsed: 0
+        };
+
+        // Room backgrounds - different for each room
+        const roomBackgrounds = [
+            'linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url("https://source.unsplash.com/featured/1200x800?room")',
+            'linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url("https://source.unsplash.com/featured/1200x801?laboratory")',
+            'linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url("https://source.unsplash.com/featured/1200x802?library")',
+            'linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url("https://source.unsplash.com/featured/1200x803?office")',
+            'linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url("https://source.unsplash.com/featured/1200x804?basement")'
+        ];
+
+        // Puzzle database organized by category and difficulty
+        const puzzles = {
+            math: {
+                easy: [
+                    {
+                        question: "כמה זה 23 + 48?",
+                        options: ["71", "72", "73", "70"],
+                        answer: "71"
+                    },
+                    {
+                        question: "כמה זה 12 × 4?",
+                        options: ["36", "48", "52", "44"],
+                        answer: "48"
+                    },
+                    {
+                        question: "השלם את הסדרה: 2, 4, 6, 8, ...",
+                        options: ["9", "10", "12", "14"],
+                        answer: "10"
+                    }
+                ],
+                medium: [
+                    {
+                        question: "כמה זה 17 × 13?",
+                        options: ["201", "211", "221", "231"],
+                        answer: "221"
+                    },
+                    {
+                        question: "פתור: 5² + 3³",
+                        options: ["25", "52", "34", "43"],
+                        answer: "52"
+                    },
+                    {
+                        question: "השלם את הסדרה: 3, 7, 15, 31, ...",
+                        options: ["63", "57", "62", "47"],
+                        answer: "63"
+                    }
+                ],
+                hard: [
+                    {
+                        question: "פתור: √(196) + 11² - 100",
+                        options: ["34", "41", "33", "29"],
+                        answer: "33"
+                    },
+                    {
+                        question: "נתון משולש שצלעותיו באורך 3, 4, 5. מה שטח המשולש?",
+                        options: ["6", "10", "12", "7.5"],
+                        answer: "6"
+                    },
+                    {
+                        question: "פתור: log₁₀(1000) + 5 - 2²",
+                        options: ["4", "5", "6", "7"],
+                        answer: "5"
+                    }
+                ]
+            },
+            knowledge: {
+                easy: [
+                    {
+                        question: "מי כתב את 'הנסיך הקטן'?",
+                        options: ["אנטואן דה סנט-אכזופרי", "אלברט איינשטיין", "מארק טוויין", "אריך קסטנר"],
+                        answer: "אנטואן דה סנט-אכזופרי"
+                    },
+                    {
+                        question: "מהי עיר הבירה של אוסטרליה?",
+                        options: ["סידני", "מלבורן", "קנברה", "בריסביין"],
+                        answer: "קנברה"
+                    },
+                    {
+                        question: "איזה יסוד כימי מסומן באות H?",
+                        options: ["הליום", "מימן", "הפניום", "הולמיום"],
+                        answer: "מימן"
+                    }
+                ],
+                medium: [
+                    {
+                        question: "באיזו שנה הסתיימה מלחמת העולם השנייה?",
+                        options: ["1945", "1944", "1946", "1943"],
+                        answer: "1945"
+                    },
+                    {
+                        question: "מי המציא את הטלפון?",
+                        options: ["תומאס אדיסון", "אלכסנדר גרהם בל", "ניקולה טסלה", "אלברט איינשטיין"],
+                        answer: "אלכסנדר גרהם בל"
+                    },
+                    {
+                        question: "איזה אוקיינוס הוא הגדול בעולם?",
+                        options: ["האוקיינוס האטלנטי", "האוקיינוס ההודי", "האוקיינוס השקט", "הים התיכון"],
+                        answer: "האוקיינוס השקט"
+                    }
+                ],
+                hard: [
+                    {
+                        question: "מהו החוק השלישי של ניוטון?",
+                        options: [
+                            "לכל פעולה יש תגובה שווה ומנוגדת", 
+                            "F = ma", 
+                            "אנרגיה אינה נוצרת ואינה נעלמת", 
+                            "שימור התנע"
+                        ],
+                        answer: "לכל פעולה יש תגובה שווה ומנוגדת"
+                    },
+                    {
+                        question: "מי היה הקיסר הראשון של רומא?",
+                        options: ["יוליוס קיסר", "אוגוסטוס", "נירון", "קליגולה"],
+                        answer: "אוגוסטוס"
+                    },
+                    {
+                        question: "איזה אפקט מתאר את שינוי התדירות של גל כאשר המקור נע ביחס לצופה?",
+                        options: ["אפקט קומפטון", "אפקט דופלר", "אפקט פוטואלקטרי", "אפקט זימן"],
+                        answer: "אפקט דופלר"
+                    }
+                ]
+            },
+            visual: {
+                easy: [
+                    {
+                        question: "איזו צורה הבאה אינה מתאימה לקבוצה?",
+                        visual: true,
+                        visualContent: `
+                        <div style="display:flex; justify-content:space-around; margin:20px 0;">
+                            <div style="width:40px; height:40px; background-color:blue; border-radius:50%;"></div>
+                            <div style="width:40px; height:40px; background-color:blue;"></div>
+                            <div style="width:40px; height:40px; background-color:blue; border-radius:50%;"></div>
+                            <div style="width:40px; height:40px; background-color:blue; border-radius:50%;"></div>
+                        </div>
+                        `,
+                        options: ["הצורה הראשונה", "הצורה השנייה", "הצורה השלישית", "הצורה הרביעית"],
+                        answer: "הצורה השנייה"
+                    },
+                    {
+                        question: "מה יהיה בתיבה הבאה בסדרה?",
+                        visual: true,
+                        visualContent: `
+                        <div style="display:flex; justify-content:space-around; margin:20px 0;">
+                            <div style="text-align:center;">
+                                <div style="font-size:24px;">1</div>
+                                <div>תיבה 1</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <div style="font-size:24px;">3</div>
+                                <div>תיבה 2</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <div style="font-size:24px;">5</div>
+                                <div>תיבה 3</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <div style="font-size:24px;">?</div>
+                                <div>תיבה 4</div>
+                            </div>
+                        </div>
+                        `,
+                        options: ["6", "7", "8", "9"],
+                        answer: "7"
+                    }
+                ],
+                medium: [
+                    {
+                        question: "איזו תבנית ממשיכה את הסדרה?",
+                        visual: true,
+                        visualContent: `
+                        <div style="display:flex; justify-content:space-around; margin:20px 0;">
+                            <div style="text-align:center;">
+                                <div style="width:50px; height:50px; margin:auto; border:1px solid black; display:flex; justify-content:center; align-items:center;">
+                                    <div style="width:20px; height:20px; background-color:black;"></div>
+                                </div>
+                                <div>1</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <div style="width:50px; height:50px; margin:auto; border:1px solid black; display:flex; justify-content:center; align-items:center;">
+                                    <div style="width:20px; height:20px; background-color:black; transform:rotate(45deg);"></div>
+                                </div>
+                                <div>2</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <div style="width:50px; height:50px; margin:auto; border:1px solid black; display:flex; justify-content:center; align-items:center;">
+                                    <div style="width:20px; height:20px; background-color:black; transform:rotate(90deg);"></div>
+                                </div>
+                                <div>3</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <div style="width:50px; height:50px; margin:auto; border:1px solid black; display:flex; justify-content:center; align-items:center;">
+                                    <div style="font-size:24px;">?</div>
+                                </div>
+                                <div>4</div>
+                            </div>
+                        </div>
+                        `,
+                        options: [
+                            `<div style="width:20px; height:20px; background-color:black; transform:rotate(135deg);"></div>`,
+                            `<div style="width:20px; height:20px; background-color:black; transform:rotate(180deg);"></div>`,
+                            `<div style="width:20px; height:20px; background-color:black; transform:rotate(225deg);"></div>`,
+                            `<div style="width:20px; height:20px; background-color:black; border-radius:50%;"></div>`
+                        ],
+                        answer: `<div style="width:20px; height:20px; background-color:black; transform:rotate(135deg);"></div>`
+                    }
+                ],
+                hard: [
+                    {
+                        question: "איזה דפוס ימשיך את הרצף?",
+                        visual: true,
+                        visualContent: `
+                        <div style="margin:20px 0; text-align:center;">
+                            <div style="display:inline-block; margin:5px; padding:10px; border:1px solid black;">
+                                ○●○<br>●○●<br>○●○
+                            </div>
+                            <div style="display:inline-block; margin:5px; padding:10px; border:1px solid black;">
+                                ●○●<br>○●○<br>●○●
+                            </div>
+                            <div style="display:inline-block; margin:5px; padding:10px; border:1px solid black;">
+                                ○●○<br>●○●<br>○●○
+                            </div>
+                            <div style="display:inline-block; margin:5px; padding:10px; border:1px solid black;">
+                                ?
+                            </div>
+                        </div>
+                        `,
+                        options: [
+                            `●○●<br>○●○<br>●○●`,
+                            `●●●<br>●●●<br>●●●`,
+                            `○○○<br>○○○<br>○○○`,
+                            `●○●<br>●○●<br>●○●`
+                        ],answer: `●○●<br>○●○<br>●○●`
+                    }
+                ]
+            },
+            word: {
+                easy: [
+                    {
+                        question: "איזו מילה אינה שייכת לקבוצה?",
+                        options: ["תפוח", "אגס", "בננה", "עגבנייה"],
+                        answer: "עגבנייה"
+                    },
+                    {
+                        question: "השלם את הפתגם: ״אין עשן בלי...״",
+                        options: ["אש", "מים", "אוויר", "אדמה"],
+                        answer: "אש"
+                    }
+                ],
+                medium: [
+                    {
+                        question: "מהי המילה הנרדפת ל'לחקור'?",
+                        options: ["לבדוק", "לדרוש", "לבחון", "כל התשובות נכונות"],
+                        answer: "כל התשובות נכונות"
+                    },
+                    {
+                        question: "איזו מילה יוצאת דופן מבחינת השורש?",
+                        options: ["מבקר", "ביקורת", "בוקר", "מבוקר"],
+                        answer: "בוקר"
+                    }
+                ],
+                hard: [
+                    {
+                        question: "השלם את האנלוגיה: כאב הוא לרופא כמו... הוא לעורך דין",
+                        options: ["חוק", "משפט", "סכסוך", "פשע"],
+                        answer: "סכסוך"
+                    },
+                    {
+                        question: "מהו הפירוש של המילה 'אספקלריה'?",
+                        options: ["מראה", "חלון", "משקפת", "מנורה"],
+                        answer: "מראה"
+                    }
+                ]
+            },
+            logic: {
+                easy: [
+                    {
+                        question: "יוסי גבוה מדני. דני גבוה מיעקב. מי הכי נמוך?",
+                        options: ["יוסי", "דני", "יעקב", "לא ניתן לקבוע"],
+                        answer: "יעקב"
+                    },
+                    {
+                        question: "בכל תיבה יש 8 כדורים. כמה כדורים יש ב-3 תיבות?",
+                        options: ["21", "22", "24", "27"],
+                        answer: "24"
+                    }
+                ],
+                medium: [
+                    {
+                        question: "אם היום הוא יום שלישי, מה יהיה היום בעוד 100 ימים?",
+                        options: ["יום ראשון", "יום שני", "יום שלישי", "יום רביעי"],
+                        answer: "יום רביעי"
+                    },
+                    {
+                        question: "איזה מספר משלים את הסדרה: 2, 6, 12, 20, 30, ?",
+                        options: ["36", "42", "48", "50"],
+                        answer: "42"
+                    }
+                ],
+                hard: [
+                    {
+                        question: "שלושה אנשים - אחד תמיד משקר, אחד תמיד דובר אמת, ואחד לפעמים משקר ולפעמים דובר אמת. אדם א' אומר: 'אני דובר אמת'. אדם ב' אומר: 'אדם א' משקר תמיד'. אדם ג' אומר: 'אני לא האדם שמשקר תמיד'. מי האדם שמשקר תמיד?",
+                        options: ["אדם א'", "אדם ב'", "אדם ג'", "לא ניתן לקבוע"],
+                        answer: "אדם א'"
+                    },
+                    {
+                        question: "בכפר מסוים יש 100 תושבים. 85 מדברים עברית, 75 מדברים אנגלית, ו-60 מדברים ערבית. מה המספר המינימלי של תושבים שמדברים את שלוש השפות?",
+                        options: ["20", "25", "30", "35"],
+                        answer: "20"
+                    }
+                ]
+            }
+        };
+
+        // DOM elements
+        const setupScreen = document.getElementById('setup-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const difficultyOptions = document.querySelectorAll('.difficulty-options .option-card');
+        const categoryOptions = document.querySelectorAll('.category-options .option-card');
+        const timeOptions = document.querySelectorAll('.time-options .option-card');
+        const startGameButton = document.getElementById('start-game');
+        const quitGameButton = document.getElementById('quit-game');
+        const playAgainButton = document.getElementById('play-again');
+        const backToSetupButton = document.getElementById('back-to-setup');
+        const timerElement = document.getElementById('timer');
+        const currentRoomElement = document.getElementById('current-room');
+        const totalRoomsElement = document.getElementById('total-rooms');
+        const attemptsLeftElement = document.getElementById('attempts-left');
+        const progressBarElement = document.getElementById('progress-bar');
+        const roomBackgroundElement = document.getElementById('room-background');
+        const puzzleTitleElement = document.getElementById('puzzle-title');
+        const puzzleContentElement = document.getElementById('puzzle-content');
+        const puzzleOptionsElement = document.getElementById('puzzle-options');
+        const resultTitleElement = document.getElementById('result-title');
+        const resultMessageElement = document.getElementById('result-message');
+        const completedRoomsElement = document.getElementById('completed-rooms');
+        const attemptsUsedElement = document.getElementById('attempts-used');
+        const totalTimeElement = document.getElementById('total-time');
+
+        // Event listeners for setup options
+        difficultyOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                // Remove selected class from all options
+                difficultyOptions.forEach(opt => opt.classList.remove('selected'));
+                // Add selected class to clicked option
+                option.classList.add('selected');
+                // Update game state
+                gameState.difficulty = option.dataset.difficulty;
+                
+                // Set attempts based on difficulty
+                switch(gameState.difficulty) {
+                    case 'easy':
+                        gameState.maxAttempts = 6;
+                        break;
+                    case 'medium':
+                        gameState.maxAttempts = 4;
+                        break;
+                    case 'hard':
+                        gameState.maxAttempts = 3;
+                        break;
+                }
+                gameState.attemptsLeft = gameState.maxAttempts;
+            });
+        });
+
+        categoryOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                // Toggle selected class
+                option.classList.toggle('selected');
+                
+                const category = option.dataset.category;
+                
+                // Update game state categories array
+                if (option.classList.contains('selected')) {
+                    // Add category if not already in array
+                    if (!gameState.categories.includes(category)) {
+                        gameState.categories.push(category);
+                    }
+                } else {
+                    // Remove category
+                    gameState.categories = gameState.categories.filter(cat => cat !== category);
+                }
+            });
+        });
+
+        timeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                // Remove selected class from all options
+                timeOptions.forEach(opt => opt.classList.remove('selected'));
+                // Add selected class to clicked option
+                option.classList.add('selected');
+                // Update game state
+                gameState.timeMode = option.dataset.time;
+            });
+        });
+
+        // Start game
+        startGameButton.addEventListener('click', () => {
+            // Validate at least one category is selected
+            if (gameState.categories.length === 0) {
+                alert('אנא בחר לפחות קטגוריה אחת של חידות');
+                return;
+            }
+            
+            // Initialize game
+            gameState.currentRoom = 1;
+            gameState.attemptsLeft = gameState.maxAttempts;
+            gameState.progress = 0;
+            gameState.completedRooms = 0;
+            gameState.attemptsUsed = 0;
+            gameState.startTime = new Date();
+            
+            // Set UI elements
+            currentRoomElement.textContent = gameState.currentRoom;
+            totalRoomsElement.textContent = gameState.totalRooms;
+            attemptsLeftElement.textContent = gameState.attemptsLeft;
+            progressBarElement.style.width = '0%';
+            progressBarElement.textContent = '0%';
+            
+            // Show game screen
+            setupScreen.classList.remove('active');
+            gameScreen.classList.add('active');
+            
+            // Start timer if in timed mode
+            if (gameState.timeMode === 'timed') {
+                startTimer();
+            } else {
+                timerElement.textContent = '00:00';
+                // Start elapsed time counter
+                gameState.timer = setInterval(updateElapsedTime, 1000);
+            }
+            
+            // Load first puzzle
+            loadNewPuzzle();
+        });
+
+        // Function to start the countdown timer
+        function startTimer() {
+            let timeLeft = gameState.timeLimit;
+            
+            function updateTimer() {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                
+                timerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                
+                // Add warning classes based on time left
+                if (timeLeft <= 10) {
+                    timerElement.classList.add('danger');
+                    timerElement.classList.remove('warning');
+                } else if (timeLeft <= 15) {
+                    timerElement.classList.add('warning');
+                    timerElement.classList.remove('danger');
+                } else {
+                    timerElement.classList.remove('warning', 'danger');
+                }
+                
+                if (timeLeft <= 0) {
+                    // Time's up
+                    clearInterval(gameState.timer);
+                    handleWrongAnswer('אזל הזמן!');
+                } else {
+                    timeLeft--;
+                }
+            }
+            
+            // Initial update
+            updateTimer();
+            
+            // Start interval
+            clearInterval(gameState.timer);
+            gameState.timer = setInterval(updateTimer, 1000);
+        }
+
+        // Function to update elapsed time
+        function updateElapsedTime() {
+            const elapsedSeconds = Math.floor((new Date() - gameState.startTime) / 1000);
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            
+            timerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            gameState.timeElapsed = elapsedSeconds;
+        }
+
+        // Load a new puzzle
+        function loadNewPuzzle() {
+            // Set room background
+            const roomIndex = Math.min(gameState.currentRoom - 1, roomBackgrounds.length - 1);
+            roomBackgroundElement.style.background = roomBackgrounds[roomIndex];
+            
+            // Randomly select category from available categories
+            const randomCategoryIndex = Math.floor(Math.random() * gameState.categories.length);
+            const selectedCategory = gameState.categories[randomCategoryIndex];
+            
+            // Get puzzles from selected category and current difficulty
+            const categoryPuzzles = puzzles[selectedCategory][gameState.difficulty];
+            
+            // Randomly select a puzzle
+            const randomPuzzleIndex = Math.floor(Math.random() * categoryPuzzles.length);
+            gameState.currentPuzzle = categoryPuzzles[randomPuzzleIndex];
+            
+            // Update puzzle title
+            puzzleTitleElement.textContent = `חידה #${gameState.currentRoom} - ${getCategoryName(selectedCategory)}`;
+            
+            // Update puzzle content
+            if (gameState.currentPuzzle.visual) {
+                puzzleContentElement.innerHTML = `
+                    <div class="visual-puzzle">
+                        <div>${gameState.currentPuzzle.question}</div>
+                        ${gameState.currentPuzzle.visualContent}
+                    </div>
+                `;
+            } else if (selectedCategory === 'math') {
+                puzzleContentElement.innerHTML = `
+                    <div class="math-puzzle">
+                        ${gameState.currentPuzzle.question}
+                    </div>
+                `;
+            } else {
+                puzzleContentElement.innerHTML = `
+                    <div class="knowledge-puzzle">
+                        ${gameState.currentPuzzle.question}
+                    </div>
+                `;
+            }
+            
+            // Update puzzle options
+            puzzleOptionsElement.innerHTML = '';
+            
+            gameState.currentPuzzle.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'puzzle-option';
+                optionElement.innerHTML = option;
+                optionElement.addEventListener('click', () => checkAnswer(option));
+                
+                puzzleOptionsElement.appendChild(optionElement);
+            });
+            
+            // Restart timer if in timed mode
+            if (gameState.timeMode === 'timed') {
+                startTimer();
+            }
+        }
+
+        // Get category display name
+        function getCategoryName(category) {
+            switch(category) {
+                case 'math': return 'מתמטיקה';
+                case 'knowledge': return 'ידע כללי';
+                case 'visual': return 'חידה ויזואלית';
+                case 'word': return 'חידת מילים';
+                case 'logic': return 'חידת הגיון';
+                default: return 'חידה';
+            }
+        }
+
+        // Check the selected answer
+        function checkAnswer(selectedOption) {
+            if (gameState.timeMode === 'timed') {
+                clearInterval(gameState.timer);
+            }
+            
+            if (selectedOption === gameState.currentPuzzle.answer) {
+                // Correct answer
+                handleCorrectAnswer();
+            } else {
+                // Wrong answer
+                handleWrongAnswer('תשובה שגויה!');
+            }
+        }
+
+        // Handle correct answer
+        function handleCorrectAnswer() {
+            // Update progress
+            gameState.progress += 100 / gameState.totalRooms;
+            progressBarElement.style.width = `${gameState.progress}%`;
+            progressBarElement.textContent = `${Math.round(gameState.progress)}%`;
+            
+            // Show success message
+            puzzleContentElement.innerHTML = `<div class="success-text" style="font-size: 1.5em;">תשובה נכונה! 🎉</div>`;
+            puzzleOptionsElement.innerHTML = '';
+            
+            // Move to next room or end game
+            gameState.completedRooms++;
+            
+            setTimeout(() => {
+                if (gameState.currentRoom < gameState.totalRooms) {
+                    // Move to next room
+                    gameState.currentRoom++;
+                    currentRoomElement.textContent = gameState.currentRoom;
+                    loadNewPuzzle();
+                } else {
+                    // Game completed successfully
+                    endGame(true);
+                }
+            }, 1500);
+        }
+
+        // Handle wrong answer
+        function handleWrongAnswer(message) {
+            // Decrease attempts
+            gameState.attemptsLeft--;
+            gameState.attemptsUsed++;
+            attemptsLeftElement.textContent = gameState.attemptsLeft;
+            
+            // Add shake animation
+            puzzleContainer.classList.add('shake');
+            setTimeout(() => puzzleContainer.classList.remove('shake'), 500);
+            
+            if (gameState.attemptsLeft <= 0) {
+                // Game over
+                endGame(false);
+            } else {
+                // Show error message
+                const previousContent = puzzleContentElement.innerHTML;
+                puzzleContentElement.innerHTML = `<div class="danger-text" style="font-size: 1.5em;">${message}</div>`;
+                
+                // Temporarily disable options
+                const options = document.querySelectorAll('.puzzle-option');
+                options.forEach(option => option.style.pointerEvents = 'none');
+                
+                // Restore content after delay
+                setTimeout(() => {
+                    puzzleContentElement.innerHTML = previousContent;
+                    options.forEach(option => option.style.pointerEvents = 'auto');
+                    
+                    // Restart timer if in timed mode
+                    if (gameState.timeMode === 'timed') {
+                        startTimer();
+                    }
+                }, 1500);
+            }
+        }
+
+        // End the game
+        function endGame(success) {
+            // Stop timer
+            clearInterval(gameState.timer);
+            
+            // Update results screen
+            if (success) {
+                resultTitleElement.textContent = 'הצלחת במשימה!';
+                resultMessageElement.textContent = 'כל הכבוד! הצלחת לברוח מכל החדרים בהצלחה.';
+                resultTitleElement.className = 'success-text';
+            } else {
+                resultTitleElement.textContent = 'המשימה נכשלה';
+                resultMessageElement.textContent = 'אזלו לך כל הניסיונות. נסה שוב!';
+                resultTitleElement.className = 'danger-text';
+            }
+            
+            completedRoomsElement.textContent = gameState.completedRooms;
+            attemptsUsedElement.textContent = gameState.attemptsUsed;
+            
+            // Format elapsed time
+            const minutes = Math.floor(gameState.timeElapsed / 60);
+            const seconds = gameState.timeElapsed % 60;
+            totalTimeElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            // Show results screen
+            gameScreen.classList.remove('active');
+            resultsScreen.classList.add('active');
+        }
+
+        // Quit game button
+        quitGameButton.addEventListener('click', () => {
+            // Stop timer
+            clearInterval(gameState.timer);
+            
+            // Return to setup screen
+            gameScreen.classList.remove('active');
+            setupScreen.classList.add('active');
+        });
+
+        // Play again button
+        playAgainButton.addEventListener('click', () => {
+            // Return to game screen and restart
+            resultsScreen.classList.remove('active');
+            setupScreen.classList.add('active');
+        });
+
+        // Back to setup button
+        backToSetupButton.addEventListener('click', () => {
+            // Return to setup screen
+            resultsScreen.classList.remove('active');
+            setupScreen.classList.add('active');
+        });
+
+        // Initial selection of medium difficulty
+        difficultyOptions[1].classList.add('selected');
+    </script>
+</body>
+</html>
